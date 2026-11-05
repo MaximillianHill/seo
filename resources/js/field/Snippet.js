@@ -322,20 +322,26 @@ export default class Snippet {
 	}
 
 	async _renderTokens () {
-		return new Promise(resolve => {
-			const fields = $(this.mainForm).serializeArray().reduce((a, b) => {
-				a[b.name] = b.value;
-				return a;
-			}, {});
+		const fields = $(this.mainForm).serializeArray().reduce((a, b) => {
+			a[b.name] = b.value;
+			return a;
+		}, {});
 
-			if (fields.hasOwnProperty('action'))
-				delete fields.action;
+		delete fields.action;
 
-			Craft.postActionRequest('seo/seo/render-data', {
-				...this.SEO.options.renderData,
-				...fields,
-			}, resolve);
+		const data = { ...this.SEO.options.renderData, ...fields };
+
+		if (this._lastRender && Craft.compare(data, this._lastRender.data))
+			return this._lastRender.tokens;
+
+		const tokens = await new Promise(resolve => {
+			Craft.postActionRequest('seo/seo/render-data', data, resolve);
 		});
+
+		if (tokens)
+			this._lastRender = { data, tokens };
+
+		return tokens;
 	}
 
 	_observeTitleEditables () {

@@ -324,24 +324,4 @@ class SeoField extends Field implements PreviewableFieldInterface
 		return $value->title . ' ' . $value->description;
 	}
 
-	public function getTableAttributeHtml (
-		mixed $value,
-		ElementInterface $element
-	): string {
-		/** @var SeoData $value */
-		switch ($value->score) {
-			case 'poor':
-				return '<span class="status active" style="margin-top:5px;background:#ff4750;" title="Poor"></span>';
-				break;
-			case 'average':
-				return '<span class="status active" style="margin-top:5px;background:#ffab47;" title="Average"></span>';
-				break;
-			case 'good':
-				return '<span class="status active" style="margin-top:5px;background:#3eda80;" title="Good"></span>';
-				break;
-			default:
-				return '<span class="status active" style="margin-top:5px;background:#ccc;" title="Unranked"></span>';
-		}
-	}
-
 }

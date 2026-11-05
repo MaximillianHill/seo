@@ -10,7 +10,6 @@
 
 import "babel-polyfill";
 import Tabs from "./field/Tabs";
-import FocusKeywords from "./field/FocusKeywords";
 import Snippet from "./field/Snippet";
 import Social from "./field/Social";
 
@@ -49,21 +48,6 @@ class SeoField {
 		new Tabs(namespace);
 		new Snippet(namespace, this);
 		new Social(namespace, this);
-
-		// Override the ElementEditor init to ensure $primaryForm is available
-		const fn = window.Craft.ElementEditor.prototype.init;
-		const self = this;
-
-    window.Craft.ElementEditor.prototype.init = function() {
-			fn.apply(this, arguments);
-
-			const draftEditor = window.Craft.cp.$primaryForm.data('elementEditor');
-
-			if (!draftEditor)
-				return;
-
-			new FocusKeywords(namespace, self);
-		};
 	}
 	
 }
