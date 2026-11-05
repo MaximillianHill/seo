@@ -18,15 +18,12 @@ export default class Snippet {
 	// =========================================================================
 
 	_dirtyTokens = {};
-	_observedInputs = [];
 
 	constructor (namespace, SEO) {
 		this.namespace = namespace;
 		this.SEO = SEO;
 
 		this.mainForm = document.getElementById('main-form');
-		this.seoFields = document.querySelectorAll('div[data-type*="SeoField"]');
-		this.seoFieldCount = this.seoFields.length;
 
 		this.titleField = document.getElementById(`${namespace}Title`);
 		this.slugField  = document.getElementById(`${namespace}Slug`);
@@ -83,9 +80,10 @@ export default class Snippet {
 			);
 		}
 
-		this.formObserver = new MutationObserver(debounce(this.onAnyChange, 500));
-		this._observeMainForm();
-		this._observeAllInputs();
+		this.mainForm.addEventListener('input', e => {
+			if (e.target.id === 'title')
+				this.onTitleChange(e);
+		});
 	}
 
 	/**
@@ -201,32 +199,9 @@ export default class Snippet {
 		});
 	};
 
-	onAnyChange = debounce(async (records) => {
-		// Skip if all changes occurred within an SEO field
-		let skip = true;
-
-		recordLoop:
-			for (let i = 0, l = records.length; i < l; ++i) {
-				for (let x = 0; x < this.seoFieldCount; ++x)
-					if (this.seoFields[x].contains(records[i].target))
-						continue recordLoop;
-
-				skip = false;
-				break;
-			}
-
-		if (skip)
-			return;
-
-		// Re-render tokens
-
-		this._unObserveAllInputs();
-
+	onTitleChange = debounce(async () => {
 		this.titleObserver.disconnect();
 		this.titleObserver.takeRecords();
-
-		this.formObserver.disconnect();
-		this.formObserver.takeRecords();
 
 		const tokens = await this._renderTokens();
 		const titleTokens = this.titleField.children;
@@ -245,9 +220,7 @@ export default class Snippet {
 		}
 
 		this._observeTitleEditables();
-		this._observeMainForm();
-		this._observeAllInputs();
-	});
+	}, 500);
 
 	// Helpers
 	// =========================================================================
@@ -355,44 +328,6 @@ export default class Snippet {
 				characterData: true,
 				subtree: true,
 			});
-		}
-	}
-
-	_observeMainForm () {
-		this.formObserver.observe(this.mainForm, {
-			childList: true,
-			attributes: true,
-			characterData: true,
-			subtree: true,
-			attributeOldValue: true,
-			characterDataOldValue: true,
-		});
-	}
-
-	_observeAllInputs () {
-		// NOTE: Value changes shouldn't (I think) be detected by
-		// MutationObserver, but are in FF and Safari so this is causing a
-		// double render of the tokens. I'm leaving it in in-case those
-		// browsers change down the line.
-
-		this._observedInputs = this.mainForm.querySelectorAll('input, textarea, select');
-
-		for (let i = 0, l = this._observedInputs.length; i < l; ++i) {
-			const target = this._observedInputs[i];
-			target.addEventListener(
-				'input',
-				this.onAnyChange.bind(this, [{target}])
-			);
-		}
-	}
-
-	_unObserveAllInputs () {
-		for (let i = 0, l = this._observedInputs.length; i < l; ++i) {
-			const target = this._observedInputs[i];
-			target.removeEventListener(
-				'input',
-				this.onAnyChange.bind(this, [{target}])
-			);
 		}
 	}
 
